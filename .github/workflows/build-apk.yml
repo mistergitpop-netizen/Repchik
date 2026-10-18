@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -16,14 +16,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      # Android SDK уже установлен на runner'е (ANDROID_HOME), отдельный шаг setup-android не нужен.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
 
       - name: Sync web UI into the app
-        run: cp web/index.html android/app/src/main/assets/index.html
+        run: |
+          mkdir -p android/app/src/main/assets
+          cp web/index.html android/app/src/main/assets/index.html
 
       - name: Build debug APK
         working-directory: android
