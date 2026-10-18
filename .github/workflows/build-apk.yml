@@ -26,14 +26,14 @@ jobs:
 
       - name: Sync web UI into the app
         run: |
-          mkdir -p android/app/src/main/assets
-          cp web/index.html android/app/src/main/assets/index.html
+          mkdir -p repetitor/android/app/src/main/assets
+          cp repetitor/web/index.html repetitor/android/app/src/main/assets/index.html
 
       - name: Build debug APK
-        working-directory: android
+        working-directory: repetitor/android
         run: gradle assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
           name: repetitor-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: repetitor/android/app/build/outputs/apk/debug/*.apk
