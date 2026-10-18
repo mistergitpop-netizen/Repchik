@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>Репетитор</title>
+<style>
+:root{
+  --bg:#f6f7fb; --card:#ffffff; --text:#1c1e2b; --muted:#6b7090; --accent:#4f46e5; --accent-text:#ffffff;
+  --user:#4f46e5; --user-text:#fff; --bot:#ffffff; --border:#e3e5f0; --code:#eef0f8;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#12131c; --card:#1b1d2a; --text:#eceefb; --muted:#9a9fc0; --accent:#7c75ff; --accent-text:#10111a;
+  --user:#5b54e8; --user-text:#fff; --bot:#1e2030; --border:#2c2f45; --code:#262941;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border)}
+header h1{font-size:17px;margin:0;flex:1}
+header h1 small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.icon-btn{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:10px;padding:7px 10px;font-size:15px;cursor:pointer}
+.modes{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border);scrollbar-width:none}
+.modes::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:7px 14px;font-size:14px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+#chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 13px;border-radius:16px;word-wrap:break-word;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--user);color:var(--user-text);border-bottom-right-radius:5px;white-space:pre-wrap}
+.msg.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--border);border-bottom-left-radius:5px}
+.msg.err{align-self:center;background:transparent;border:1px dashed #d9534f;color:#d9534f;font-size:14px}
+.msg p{margin:0 0 8px}.msg p:last-child{margin:0}
+.msg h3,.msg h4{margin:10px 0 4px;font-size:16px}
+.msg ul,.msg ol{margin:4px 0 8px;padding-left:22px}
+.msg code{background:var(--code);padding:1px 5px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+.msg pre{background:var(--code);padding:10px;border-radius:10px;overflow-x:auto;margin:6px 0}
+.msg pre code{background:none;padding:0}
+.typing{display:inline-flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes b{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.welcome{margin:auto;text-align:center;color:var(--muted);padding:20px;max-width:420px}
+.welcome h2{color:var(--text);margin:0 0 6px}
+.suggest{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+form{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--border)}
+textarea{flex:1;resize:none;max-height:140px;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:14px;padding:10px 12px;font:inherit;outline:none}
+textarea:focus{border-color:var(--accent)}
+#send{border:0;background:var(--accent);color:var(--accent-text);border-radius:14px;padding:0 18px;font-size:16px;font-weight:600;cursor:pointer}
+#send:disabled{opacity:.5}
+dialog{border:1px solid var(--border);border-radius:16px;background:var(--card);color:var(--text);padding:18px;width:min(92vw,440px)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h2{margin:0 0 12px;font-size:18px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input,select{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:10px;padding:10px;font:inherit}
+.row{display:flex;gap:8px;margin-top:16px}
+.row button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);font:inherit;cursor:pointer}
+.row button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text);font-weight:600}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 Репетитор<small id="sub">Любая тема · твой темп</small></h1>
+  <button class="icon-btn" id="newBtn" title="Новая тема">＋</button>
+  <button class="icon-btn" id="setBtn" title="Настройки">⚙︎</button>
+</header>
+<div class="modes" id="modes"></div>
+<main id="chat"></main>
+<form id="form">
+  <textarea id="inp" rows="1" placeholder="Напиши тему или вопрос…" autocomplete="off"></textarea>
+  <button id="send" type="submit">➤</button>
+</form>
+
+<dialog id="dlg">
+  <h2>Настройки</h2>
+  <label>API-ключ Anthropic</label>
+  <input id="key" type="password" placeholder="sk-ant-…" autocomplete="off">
+  <div class="hint">Хранится только на этом устройстве. Получить ключ: console.anthropic.com</div>
+  <label>Модель</label>
+  <input id="model" placeholder="claude-sonnet-5-5">
+  <label>Твой уровень</label>
+  <select id="level">
+    <option value="новичок">Новичок — объясняй с нуля</option>
+    <option value="средний">Средний — база знакома</option>
+    <option value="продвинутый">Продвинутый — глубоко и строго</option>
+  </select>
+  <label>Возраст / контекст (необязательно)</label>
+  <input id="ctx" placeholder="например: 9 класс, готовлюсь к ЕГЭ">
+  <div class="row">
+    <button type="button" id="clearBtn">Очистить чат</button>
+    <button type="button" class="primary" id="saveBtn">Сохранить</button>
+  </div>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){return document.getElementById(id)};
+var MODES = {
+  explain:{t:"💡 Объяснить", hint:"Режим: объясни тему простыми словами с примерами и аналогиями, затем проверь понимание одним вопросом."},
+  lesson:{t:"📚 Урок", hint:"Режим: проведи урок по шагам. Сначала короткий план из 4–6 пунктов, затем веди по одному шагу за раз и жди ответа ученика, прежде чем идти дальше."},
+  quiz:{t:"❓ Квиз", hint:"Режим: квиз. Задавай по одному вопросу, жди ответа, оценивай, коротко объясняй ошибки, постепенно усложняй. В конце — итог и что повторить."},
+  practice:{t:"✍️ Практика", hint:"Режим: практика. Давай по одной задаче нарастающей сложности, не показывай решение сразу — сначала подсказка, потом разбор после попытки ученика."},
+  teach:{t:"🧠 Объясни мне", hint:"Режим: метод Фейнмана. Ученик сам объясняет тему тебе, а ты находишь пробелы и неточности и задаёшь наводящие вопросы."}
+};
+var SUGGEST = ["Как работают дроби","Основы Python","Почему небо голубое","Причины Первой мировой","Английский: Present Perfect","Как устроен интернет"];
+var S = load("rep.settings", {key:"", model:"claude-sonnet-5-5", level:"новичок", ctx:""});
+var H = load("rep.history", []);
+var mode = localStorage.getItem("rep.mode") || "explain";
+var busy = false, pending = {};
+
+function load(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function inline(s){
+  return s.replace(/`([^`]+)`/g,"<code>$1</code>")
+          .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+          .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g,"$1<em>$2</em>");
+}
+function md(src){
+  var parts = esc(src).split(/```/), out = "";
+  for(var i=0;i<parts.length;i++){
+    if(i%2){ out += "<pre><code>"+parts[i].replace(/^[a-zA-Z0-9+#-]*\n/,"")+"</code></pre>"; continue; }
+    var lines = parts[i].split("\n"), list = null, para = [];
+    var flushP = function(){ if(para.length){ out += "<p>"+inline(para.join("<br>"))+"</p>"; para=[]; } };
+    var flushL = function(){ if(list){ out += "</"+list+">"; list=null; } };
+    for(var j=0;j<lines.length;j++){
+      var l = lines[j], m;
+      if((m = l.match(/^\s*[-*•]\s+(.*)/))){ flushP(); if(list!=="ul"){flushL(); out+="<ul>"; list="ul";} out+="<li>"+inline(m[1])+"</li>"; }
+      else if((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ flushP(); if(list!=="ol"){flushL(); out+="<ol>"; list="ol";} out+="<li>"+inline(m[1])+"</li>"; }
+      else if((m = l.match(/^#{1,6}\s+(.*)/))){ flushP(); flushL(); out+="<h3>"+inline(m[1])+"</h3>"; }
+      else if(!l.trim()){ flushP(); flushL(); }
+      else { flushL(); para.push(l); }
+    }
+    flushP(); flushL();
+  }
+  return out;
+}
+
+function systemPrompt(){
+  return "Ты — дружелюбный, терпеливый и очень сильный репетитор по ЛЮБОЙ теме: школьные и университетские предметы, языки, программирование, наука, история, музыка, финансы, практические навыки.\n"+
+  "Принципы:\n"+
+  "- Отвечай на языке ученика (по умолчанию русский).\n"+
+  "- Уровень ученика: "+S.level+"."+(S.ctx?" Контекст: "+S.ctx+".":"")+"\n"+
+  "- Объясняй ясно, от простого к сложному, с конкретными примерами и аналогиями.\n"+
+  "- Не вываливай всё сразу: давай небольшими порциями и регулярно проверяй понимание вопросом.\n"+
+  "- Если ученик ошибся — мягко покажи, где именно, и подведи к верному ответу, а не просто сообщи его.\n"+
+  "- Хвали за конкретные успехи, без лести. Будь честен: если не уверен — скажи об этом.\n"+
+  "- Ответы компактные, для чтения с телефона: короткие абзацы, списки, при необходимости блоки кода.\n"+
+  "- В конце каждого ответа предложи понятный следующий шаг.\n"+
+  MODES[mode].hint;
+}
+
+function renderModes(){
+  var box=$("modes"); box.innerHTML="";
+  Object.keys(MODES).forEach(function(k){
+    var b=document.createElement("button"); b.type="button"; b.className="chip"+(k===mode?" on":""); b.textContent=MODES[k].t;
+    b.onclick=function(){mode=k; localStorage.setItem("rep.mode",k); renderModes();};
+    box.appendChild(b);
+  });
+}
+function scroll(){var c=$("chat"); c.scrollTop=c.scrollHeight;}
+function addMsg(cls,html,isHtml){
+  var d=document.createElement("div"); d.className="msg "+cls;
+  if(isHtml) d.innerHTML=html; else d.textContent=html;
+  $("chat").appendChild(d); scroll(); return d;
+}
+function renderChat(){
+  var c=$("chat"); c.innerHTML="";
+  if(!H.length){
+    var w=document.createElement("div"); w.className="welcome";
+    w.innerHTML="<h2>Чему научимся сегодня?</h2>Назови любую тему — от дробей до квантовой физики. Выбери режим сверху и поехали.<div class='suggest'></div>";
+    SUGGEST.forEach(function(t){var b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=t; b.onclick=function(){send(t)}; w.querySelector(".suggest").appendChild(b);});
+    c.appendChild(w); return;
+  }
+  H.forEach(function(m){ m.role==="user" ? addMsg("user",m.content,false) : addMsg("bot",md(m.content),true); });
+}
+
+window.__onAnswer = function(id, ok, text){ var p=pending[id]; if(p){ delete pending[id]; p(ok,text);} };
+
+function callApi(messages){
+  return new Promise(function(resolve,reject){
+    var body = JSON.stringify({model:S.model||"claude-sonnet-5-5", max_tokens:1500, system:systemPrompt(), messages:messages});
+    function done(ok,text){
+      var data; try{data=JSON.parse(text)}catch(e){ return reject(new Error(text||"Пустой ответ")); }
+      if(!ok) return reject(new Error((data.error&&data.error.message)||"Ошибка API"));
+      resolve((data.content||[]).map(function(b){return b.text||""}).join(""));
+    }
+    if(window.Android && window.Android.ask){
+      var id = String(Date.now())+Math.random(); pending[id]=done;
+      window.Android.ask(id, S.key, body);
+    } else {
+      fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{
+        "content-type":"application/json","x-api-key":S.key,"anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"},body:body})
+      .then(function(r){return r.text().then(function(t){done(r.ok,t)})})
+      .catch(function(e){reject(new Error("Нет соединения: "+e.message))});
+    }
+  });
+}
+
+function send(text){
+  text=(text||"").trim();
+  if(!text||busy) return;
+  if(!S.key){ addMsg("err","Сначала добавь API-ключ в настройках (⚙︎).",false); $("dlg").showModal(); return; }
+  busy=true; $("send").disabled=true;
+  if(!H.length) $("chat").innerHTML="";
+  H.push({role:"user",content:text}); save("rep.history",H);
+  addMsg("user",text,false);
+  $("inp").value=""; autosize();
+  var t=addMsg("bot","<span class='typing'><i></i><i></i><i></i></span>",true);
+  callApi(H.slice(-30)).then(function(ans){
+    H.push({role:"assistant",content:ans}); save("rep.history",H);
+    t.innerHTML=md(ans); scroll();
+  }).catch(function(e){
+    t.remove(); H.pop(); save("rep.history",H);
+    addMsg("err","Ошибка: "+e.message,false);
+  }).then(function(){busy=false; $("send").disabled=false;});
+}
+
+function autosize(){var t=$("inp"); t.style.height="auto"; t.style.height=Math.min(t.scrollHeight,140)+"px";}
+
+$("form").addEventListener("submit",function(e){e.preventDefault(); send($("inp").value);});
+$("inp").addEventListener("input",autosize);
+$("inp").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey&&window.innerWidth>700){e.preventDefault(); send($("inp").value);} });
+$("newBtn").onclick=function(){ if(!H.length||confirm("Начать новую тему? Текущий чат будет очищен.")){H=[]; save("rep.history",H); renderChat();} };
+$("setBtn").onclick=function(){ $("key").value=S.key; $("model").value=S.model; $("level").value=S.level; $("ctx").value=S.ctx; $("dlg").showModal(); };
+$("saveBtn").onclick=function(){ S={key:$("key").value.trim(),model:$("model").value.trim()||"claude-sonnet-5-5",level:$("level").value,ctx:$("ctx").value.trim()}; save("rep.settings",S); $("dlg").close(); };
+$("clearBtn").onclick=function(){ H=[]; save("rep.history",H); renderChat(); $("dlg").close(); };
+
+renderModes(); renderChat();
+if(!S.key){ setTimeout(function(){ $("setBtn").click(); },300); }
+})();
+</script>
+</body>
+</html>
